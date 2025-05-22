@@ -20,6 +20,7 @@ router.post('/chat',async(req,res)=>{
                 messages:[{role:"user",content:message}]
         })
 
+        
          
     })
     console.log(apiresponse,'APIRESPONSE')
