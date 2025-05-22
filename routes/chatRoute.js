@@ -18,9 +18,8 @@ router.post('/chat',async(req,res)=>{
             body : JSON.stringify({
                 model:'mistralai/devstral-small:free',
                 messages:[{role:"user",content:message}]
-        })
-
-        
+        }),
+             
          
     })
     console.log(apiresponse,'APIRESPONSE')
