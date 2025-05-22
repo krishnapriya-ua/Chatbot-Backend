@@ -2,40 +2,47 @@
 const express = require('express')
 const router = express.Router()
 require('dotenv').config()
+const { GoogleGenerativeAI } = require('@google/generative-ai');
+const GeminiAPIKey = process.env.GEMINI_API_KEY
+const genAI = new GoogleGenerativeAI(GeminiAPIKey)
 
-const VoicebotAPI = process.env.OPENROUTER_API
+router.post('/chat', async (req, res) => {
+  const message = req.body.message;
 
-router.post('/chat',async(req,res)=>{
-    const message = req.body.message
-    try {
-        console.log(message,'MESSAGE')
-        const apiresponse = await fetch("https://openrouter.ai/api/v1/chat/completions",{
-            method:'POST',
-            headers:{
-                "Content-Type":"application/json",
-                "Authorization": `Bearer ${VoicebotAPI}`,
-            },
-            body : JSON.stringify({
-                model:'mistralai/devstral-small:free',
-                messages:[{role:"user",content:message}]
-        }),
-             
-         
-    })
-    console.log(apiresponse,'APIRESPONSE')
-    const data = await apiresponse.json()
-    
-    const reply = data.choices?.[0]?.message?.content || 'Sorry no response for this question'
-     console.log(reply,'RePLY')
-    
-    res.json({reply})
-
-    } 
-    catch (error) {
-        console.error(err);
-        res.status(500).json({ error: "Failed to get AI response" });
+  try {
+    if (!message || typeof message !== "string") {
+      return res.status(400).json({ error: "Invalid input message" });
     }
 
-})
+    const model = genAI.getGenerativeModel({
+      model: "gemini-1.5-flash",
+    });
+
+    const chat = model.startChat({
+      generationConfig: {
+        temperature: 1,
+        topP: 0.95,
+        topK: 40,
+        maxOutputTokens: 8192,
+      },
+      history: [],
+    });
+
+    const result = await chat.sendMessage(message);
+
+    const reply =
+      result.response.candidates?.[0]?.content?.parts?.[0]?.text ||
+      "Sorry, no response for this question";
+
+    console.log(reply, 'REPLY');
+    res.json({ reply });
+
+  } catch (err) {
+    console.error(err);
+    res.status(500).json({ error: "Failed to get AI response" });
+  }
+});
+
+
 
 module.exports = router
